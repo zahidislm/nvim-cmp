@@ -135,7 +135,11 @@ wildmenu_entries_view.open = function(self, offset, entries)
   })
   self:draw()
 
-  if preselect > 0 and config.get().preselect == types.cmp.PreselectMode.Item then
+  local preselect_mode = config.get().preselect
+  if type(preselect_mode) == 'function' then
+    preselect_mode = preselect_mode(entries)
+  end
+  if preselect > 0 and preselect_mode == types.cmp.PreselectMode.Item then
     self:_select(preselect, { behavior = types.cmp.SelectBehavior.Select })
   elseif not string.match(config.get().completion.completeopt, 'noselect') then
     self:_select(1, { behavior = types.cmp.SelectBehavior.Select })

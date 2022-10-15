@@ -36,7 +36,11 @@ end
 
 native_entries_view.on_change = function(self)
   if #self.entries > 0 and self.offset <= vim.api.nvim_win_get_cursor(0)[2] + 1 then
-    local preselect_enabled = config.get().preselect == types.cmp.PreselectMode.Item
+    local preselect_mode = config.get().preselect
+    if type(preselect_mode) == 'function' then
+      preselect_mode = preselect_mode(self.entries)
+    end
+    local preselect_enabled = preselect_mode == types.cmp.PreselectMode.Item
 
     local completeopt = vim.o.completeopt
     if self.preselect_index == 1 and preselect_enabled then

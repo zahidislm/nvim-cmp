@@ -207,7 +207,11 @@ custom_entries_view.open = function(self, offset, entries)
   })
   -- always set cursor when starting. It will be adjusted on the call to _select
   vim.api.nvim_win_set_cursor(self.entries_win.win, { 1, 0 })
-  if preselect_index > 0 and config.get().preselect == types.cmp.PreselectMode.Item then
+  local preselect_mode = config.get().preselect
+  if type(preselect_mode) == 'function' then
+    preselect_mode = preselect_mode(entries)
+  end
+  if preselect_index > 0 and preselect_mode == types.cmp.PreselectMode.Item then
     self:_select(preselect_index, { behavior = types.cmp.SelectBehavior.Select })
   elseif not string.match(config.get().completion.completeopt, 'noselect') then
     if self:is_direction_top_down() then
