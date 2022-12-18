@@ -31,6 +31,9 @@ async.throttle = function(fn, timeout)
     running = false,
     timeout = timeout,
     sync = function(self, timeout_)
+      if not self.running then
+        return
+      end
       vim.wait(timeout_ or 1000, function()
         return not self.running
       end)
@@ -135,6 +138,42 @@ async.debounce_next_tick = function(callback)
       running = false
       callback()
     end)
+  end
+end
+
+async.yield = function(func, ...)
+  local args = { ... }
+  return coroutine.yield(function(callback)
+    table.insert(args, callback)
+    func(unpack(args))
+  end)
+end
+
+async.yield_schedule = function()
+  return coroutine.yield(function(callback)
+    vim.schedule(callback)
+  end)
+end
+
+async.wrap = function(task)
+  local step
+  return function(...)
+    local args = { ... }
+    local thread = coroutine.create(function()
+      return task(unpack(args))
+    end)
+    step = function(...)
+      if coroutine.status(thread) == 'dead' then
+        return
+      end
+      local ok, ret = coroutine.resume(thread, ...)
+      if not ok then
+        error(ret)
+      elseif coroutine.status(thread) ~= 'dead' then
+        ret(step)
+      end
+    end
+    step()
   end
 end
 

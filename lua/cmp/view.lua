@@ -94,19 +94,19 @@ view.open = function(self, ctx, sources)
       end
     end
 
-    -- sort.
-    local comparetors = config.get().sorting.comparators
-    table.sort(entries, function(e1, e2)
-      for _, fn in ipairs(comparetors) do
-        local diff = fn(e1, e2)
-        if diff ~= nil then
-          return diff
-        end
-      end
-    end)
-
     -- open
-    if #entries > 0 then
+    if not ctx.cancelled and #entries > 0 then
+      -- sort.
+      local comparetors = config.get().sorting.comparators
+      table.sort(entries, function(e1, e2)
+        for _, fn in ipairs(comparetors) do
+          local diff = fn(e1, e2)
+          if diff ~= nil then
+            return diff
+          end
+        end
+      end)
+
       self:_get_entries_view():open(offset, entries)
       self.event:emit('menu_opened', {
         window = self:_get_entries_view(),
@@ -116,7 +116,7 @@ view.open = function(self, ctx, sources)
   end
 
   -- complete_done.
-  if #entries == 0 then
+  if not ctx.cancelled and #entries == 0 then
     self:close()
   end
 end
