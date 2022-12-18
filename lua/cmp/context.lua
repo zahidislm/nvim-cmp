@@ -16,6 +16,7 @@ local api = require('cmp.utils.api')
 ---@field public cursor_line string
 ---@field public cursor_after_line string
 ---@field public cursor_before_line string
+---@field public cancelled boolean
 local context = {}
 
 ---Create new empty context
@@ -55,7 +56,12 @@ context.new = function(prev_context, option)
   self.cursor.character = misc.to_utfindex(self.cursor_line, self.cursor.col)
   self.cursor_before_line = string.sub(self.cursor_line, 1, self.cursor.col - 1)
   self.cursor_after_line = string.sub(self.cursor_line, self.cursor.col)
+  self.cancelled = false
   return self
+end
+
+context.cancel = function(self)
+  self.cancelled = true
 end
 
 ---Return context creation reason.

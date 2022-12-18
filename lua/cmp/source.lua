@@ -113,7 +113,17 @@ source.get_entries = function(self, ctx)
   local entries = {}
   local max_item_count = self:get_source_config().max_item_count or 200
   local matching_config = self:get_matching_config()
+  local start = vim.loop.hrtime()
   for _, e in ipairs(target_entries) do
+    if vim.loop.hrtime() - start >= 10000000 then
+      async.yield_schedule()
+      start = vim.loop.hrtime()
+    end
+
+    if ctx.cancelled then
+      break
+    end
+
     local o = e:get_offset()
     if not inputs[o] then
       inputs[o] = string.sub(ctx.cursor_before_line, o)
@@ -133,6 +143,10 @@ source.get_entries = function(self, ctx)
         end
       end
     end
+  end
+
+  if not ctx.cancelled then
+    return entries
   end
 
   -- only save to cache, when there are no additional entries that could match the filter
@@ -345,8 +359,6 @@ source.complete = function(self, ctx, callback)
 
       if #(response.items or response) > 0 then
         debug.log(self:get_debug_name(), 'retrieve', #(response.items or response))
-        local old_offset = self.offset
-        local old_entries = self.entries
 
         self.status = source.SourceStatus.COMPLETED
         self.entries = {}
@@ -358,11 +370,6 @@ source.complete = function(self, ctx, callback)
           end
         end
         self.revision = self.revision + 1
-        if #self:get_entries(ctx) == 0 then
-          self.offset = old_offset
-          self.entries = old_entries
-          self.revision = self.revision + 1
-        end
       else
         -- The completion will be invoked when pressing <CR> if the trigger characters contain the <Space>.
         -- If the server returns an empty response in such a case, should invoke the keyword completion on the next keypress.

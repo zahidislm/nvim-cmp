@@ -56,6 +56,7 @@ end
 ---@param option? cmp.ContextOption
 ---@return cmp.Context
 core.get_context = function(self, option)
+  self.context:cancel()
   local prev = self.context:clone()
   prev.prev_context = nil
   prev.cache = nil
@@ -296,7 +297,7 @@ core.complete = function(self, ctx)
 end
 
 ---Update completion menu
-core.filter = async.throttle(function(self)
+core.filter = async.throttle(async.wrap(function(self)
   self.filter.timeout = config.get().performance.throttle
 
   -- Check invalid condition.
@@ -329,14 +330,14 @@ core.filter = async.throttle(function(self)
   if #self:get_sources(function(s)
     if s.status == source.SourceStatus.FETCHING then
       return true
-    elseif #s:get_entries(ctx) > 0 then
-      return true
+      -- elseif #s:get_entries(ctx) > 0 then
+      --   return true
     end
     return false
   end) == 0 then
     config.set_onetime({})
   end
-end, config.get().performance.throttle)
+end), config.get().performance.throttle)
 
 ---Confirm completion.
 ---@param e cmp.Entry
