@@ -386,13 +386,13 @@ end
 
 ---Resolve CompletionItem
 ---@param item lsp.CompletionItem
----@param callback fun(item: lsp.CompletionItem)
+---@param callback fun(item: lsp.CompletionItem|nil)
 source.resolve = function(self, item, callback)
   if not self.source.resolve then
     return callback(item)
   end
   self.source:resolve(item, function(resolved_item)
-    callback(resolved_item or item)
+    callback(resolved_item)
   end)
 end
 

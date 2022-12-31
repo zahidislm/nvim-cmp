@@ -82,7 +82,7 @@ cmp.ItemField = {
 ---@field private revision integer
 ---@field public enabled boolean | fun(): boolean
 ---@field public performance cmp.PerformanceConfig
----@field public preselect cmp.PreselectMode
+---@field public preselect cmp.PreselectMode|function(entries: cmp.Entry[]): boolean
 ---@field public completion cmp.CompletionConfig
 ---@field public window cmp.WindowConfig|nil
 ---@field public confirmation cmp.ConfirmationConfig
