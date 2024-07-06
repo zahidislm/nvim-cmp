@@ -34,24 +34,25 @@ local entry = {}
 ---@param item_defaults? lsp.internal.CompletionItemDefaults
 ---@return cmp.Entry
 entry.new = function(ctx, source, completion_item, item_defaults)
-  local self = setmetatable({}, { __index = entry })
-  self.id = misc.id('entry.new')
-  self.cache = cache.new()
-  self.match_cache = cache.new()
-  self.score = 0
-  self.exact = false
-  self.matches = {}
-  self.context = ctx
-  self.source = source
-  self.source_offset = source.request_offset
-  self.source_insert_range = source:get_default_insert_range()
-  self.source_replace_range = source:get_default_replace_range()
-  self.completion_item = self:fill_defaults(completion_item, item_defaults)
-  self.item_defaults = item_defaults
-  self.resolved_completion_item = nil
-  self.resolved_callbacks = {}
-  self.resolving = false
-  self.confirmed = false
+  local self = setmetatable({
+    id = misc.id('entry.new'),
+    cache = cache.new(),
+    match_cache = cache.new(),
+    score = 0,
+    exact = false,
+    matches = {},
+    context = ctx,
+    source = source,
+    source_offset = source.request_offset,
+    source_insert_range = source:get_default_insert_range(),
+    source_replace_range = source:get_default_replace_range(),
+    completion_item = entry.fill_defaults(nil, completion_item, item_defaults),
+    item_defaults = item_defaults,
+    resolved_completion_item = nil,
+    resolved_callbacks = {},
+    resolving = false,
+    confirmed = false,
+  }, { __index = entry })
   return self
 end
 
