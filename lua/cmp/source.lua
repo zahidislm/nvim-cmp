@@ -137,6 +137,21 @@ source.get_entries = function(self, ctx)
   return entries
 end
 
+
+---@private
+source._get_default_insert_range = function(self)
+  return {
+    start = {
+      line = self.context.cursor.row - 1,
+      character = self.offset - 1,
+    },
+    ['end'] = {
+      line = self.context.cursor.row - 1,
+      character = self.context.cursor.col - 1,
+    },
+  }
+end
+
 ---Get default insert range (UTF8 byte index).
 ---@return lsp.Range
 source.get_default_insert_range = function(self)
@@ -144,18 +159,22 @@ source.get_default_insert_range = function(self)
     error('context is not initialized yet.')
   end
 
-  return self.cache:ensure({ 'get_default_insert_range', tostring(self.revision) }, function()
-    return {
-      start = {
-        line = self.context.cursor.row - 1,
-        character = self.offset - 1,
-      },
-      ['end'] = {
-        line = self.context.cursor.row - 1,
-        character = self.context.cursor.col - 1,
-      },
-    }
-  end)
+  return self.cache:ensure({ 'get_default_insert_range', tostring(self.revision) }, source._get_default_insert_range, self)
+end
+
+---@private
+source._get_default_replace_range = function(self)
+  local _, e = pattern.offset('^' .. '\\%(' .. self:get_keyword_pattern() .. '\\)', string.sub(self.context.cursor_line, self.offset))
+  return {
+    start = {
+      line = self.context.cursor.row - 1,
+      character = self.offset,
+    },
+    ['end'] = {
+      line = self.context.cursor.row - 1,
+      character = (e and self.offset + e - 2 or self.context.cursor.col - 1),
+    },
+  }
 end
 
 ---Get default replace range (UTF8 byte index).
@@ -165,19 +184,7 @@ source.get_default_replace_range = function(self)
     error('context is not initialized yet.')
   end
 
-  return self.cache:ensure({ 'get_default_replace_range', tostring(self.revision) }, function()
-    local _, e = pattern.offset('^' .. '\\%(' .. self:get_keyword_pattern() .. '\\)', string.sub(self.context.cursor_line, self.offset))
-    return {
-      start = {
-        line = self.context.cursor.row - 1,
-        character = self.offset,
-      },
-      ['end'] = {
-        line = self.context.cursor.row - 1,
-        character = (e and self.offset + e - 2 or self.context.cursor.col - 1),
-      },
-    }
-  end)
+  return self.cache:ensure({ 'get_default_replace_range', tostring(self.revision) }, source._get_default_insert_range, self)
 end
 
 ---Return source name.
