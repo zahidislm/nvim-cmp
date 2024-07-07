@@ -3,7 +3,6 @@ local char = require('cmp.utils.char')
 local misc = require('cmp.utils.misc')
 local str = require('cmp.utils.str')
 local snippet = require('cmp.utils.snippet')
-local config = require('cmp.config')
 local types = require('cmp.types')
 local matcher = require('cmp.matcher')
 
@@ -234,9 +233,10 @@ end
 ---Return view information.
 ---@param suggest_offset integer
 ---@param entries_buf integer The buffer this entry will be rendered into.
+---@param formatting cmp.FormattingConfig
 ---@return { abbr: { text: string, bytes: integer, width: integer, hl_group: string }, kind: { text: string, bytes: integer, width: integer, hl_group: string }, menu: { text: string, bytes: integer, width: integer, hl_group: string } }
-entry.get_view = function(self, suggest_offset, entries_buf)
-  local item = self:get_vim_item(suggest_offset)
+entry.get_view = function(self, suggest_offset, entries_buf, formatting)
+  local item = self:get_vim_item(suggest_offset, formatting)
   return self.cache:ensure('get_view:' .. tostring(entries_buf), entry._get_view, self, item, entries_buf)
 end
 
@@ -269,20 +269,21 @@ end
 
 ---Make vim.CompletedItem
 ---@param suggest_offset integer
+---@param formatting cmp.FormattingConfig
 ---@return vim.CompletedItem
-entry.get_vim_item = function(self, suggest_offset)
-  return self.cache:ensure('get_vim_item:' .. tostring(suggest_offset), entry._get_vim_item, self, suggest_offset)
+entry.get_vim_item = function(self, suggest_offset, formatting)
+  return self.cache:ensure('get_vim_item:' .. tostring(suggest_offset), entry._get_vim_item, self, suggest_offset, formatting)
 end
 
 ---@private
-entry._get_vim_item = function(self, suggest_offset)
+entry._get_vim_item = function(self, suggest_offset, formatting)
   local completion_item = self.completion_item
   local word = self.word
   local abbr = str.oneline(completion_item.label)
 
   -- ~ indicator
   local is_expandable = false
-  local expandable_indicator = config.get().formatting.expandable_indicator
+  local expandable_indicator = formatting.expandable_indicator
   if #(completion_item.additionalTextEdits or {}) > 0 then
     is_expandable = true
   elseif completion_item.insertTextFormat == types.lsp.InsertTextFormat.Snippet then
@@ -331,8 +332,8 @@ entry._get_vim_item = function(self, suggest_offset)
     menu = menu,
     dup = completion_item.dup or 1,
   }
-  if config.get().formatting.format then
-    vim_item = config.get().formatting.format(self, vim_item)
+  if formatting.format then
+    vim_item = formatting.format(self, vim_item)
   end
   vim_item.word = str.oneline(vim_item.word or '')
   vim_item.abbr = str.oneline(vim_item.abbr or '')

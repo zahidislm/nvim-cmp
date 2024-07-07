@@ -252,8 +252,9 @@ core.complete_common_string = function(self)
   local cursor = api.get_cursor()
   local offset = self.view:get_offset() or cursor[2]
   local common_string
+  local formatting = config.get().formatting
   for _, e in ipairs(self.view:get_entries()) do
-    local vim_item = e:get_vim_item(offset)
+    local vim_item = e:get_vim_item(offset, formatting)
     if not common_string then
       common_string = vim_item.word
     else
