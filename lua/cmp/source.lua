@@ -24,6 +24,7 @@ local char = require('cmp.utils.char')
 ---@field public completion_context lsp.CompletionContext|nil
 ---@field public status cmp.SourceStatus
 ---@field public complete_dedup function
+---@field private prev_filtered_entries any
 local source = {}
 
 ---@alias cmp.SourceStatus 1 | 2 | 3
@@ -57,6 +58,7 @@ source.reset = function(self)
   self.request_offset = -1
   self.completion_context = nil
   self.status = source.SourceStatus.WAITING
+  self.prev_filtered_entries = nil
   self.complete_dedup(function() end)
 end
 
@@ -90,14 +92,16 @@ source.get_entries = function(self, ctx)
 
   local target_entries = self.entries
 
-  if not self.incomplete then
-    local prev = self.cache:get({ 'get_entries', tostring(self.revision) })
-    if prev and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
-      -- only use prev entries when cursor is moved forward.
-      -- and the pattern offset is the same.
-      if prev.ctx.cursor.col <= ctx.cursor.col then
-        target_entries = prev.entries
+  local prev = self.prev_filtered_entries
+  if prev and prev.revision == self.revision and ctx.cursor.row == prev.ctx.cursor.row and self.offset == prev.offset then
+    -- only use prev entries when cursor is moved forward.
+    -- and the pattern offset is the same.
+    if prev.ctx.cursor.col <= ctx.cursor.col then
+      -- directly returns prev filtered entries since input no change
+      if prev.ctx.cursor_before_line == ctx.cursor_before_line then
+        return prev.entries
       end
+      target_entries = prev.entries
     end
   end
 
@@ -130,9 +134,7 @@ source.get_entries = function(self, ctx)
     end
   end
 
-  if not self.incomplete then
-    self.cache:set({ 'get_entries', tostring(self.revision) }, { entries = entries, ctx = ctx, offset = self.offset })
-  end
+  self.prev_filtered_entries = { entries = entries, ctx = ctx, offset = self.offset, revision = self.revision }
 
   return entries
 end
