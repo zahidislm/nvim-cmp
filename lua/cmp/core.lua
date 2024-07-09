@@ -289,11 +289,9 @@ core.complete = function(self, ctx)
         if s_.incomplete and new:changed(s_.context) then
           s_:complete(new, callback)
         else
-          if not self.view:get_active_entry() then
-            self.filter.stop()
-            self.filter.timeout = config.get().performance.debounce
-            self:filter()
-          end
+          self.filter.stop()
+          self.filter.timeout = config.get().performance.debounce
+          self:filter()
         end
       end
     end)(s)
@@ -318,18 +316,7 @@ local async_filter = async.wrap(function(self)
   end
 
   -- Check fetching sources.
-  local sources = {}
-  for _, s in ipairs(self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })) do
-    -- Reserve filter call for timeout.
-    if not s.incomplete and config.get().performance.fetching_timeout > s:get_fetching_time() then
-      self.filter.timeout = config.get().performance.fetching_timeout - s:get_fetching_time()
-      self:filter()
-      if #sources == 0 then
-        return
-      end
-    end
-    table.insert(sources, s)
-  end
+  local sources = self:get_sources({ source.SourceStatus.FETCHING, source.SourceStatus.COMPLETED })
 
   local ctx = self:get_context()
 

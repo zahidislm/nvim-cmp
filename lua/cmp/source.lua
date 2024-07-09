@@ -313,7 +313,6 @@ source.complete = function(self, ctx, callback)
   end
 
   debug.log(self:get_debug_name(), 'request', offset, vim.inspect(completion_context))
-  local prev_status = self.status
   self.status = source.SourceStatus.FETCHING
   self.offset = offset
   self.request_offset = offset
@@ -336,7 +335,7 @@ source.complete = function(self, ctx, callback)
       response = response or {}
 
       self.incomplete = response.isIncomplete or false
-
+      self.status = source.SourceStatus.COMPLETED
       if #(response.items or response) > 0 then
         debug.log(self:get_debug_name(), 'retrieve', #(response.items or response))
         local old_offset = self.offset
@@ -365,7 +364,6 @@ source.complete = function(self, ctx, callback)
         if offset == ctx.cursor.col then
           self:reset()
         end
-        self.status = prev_status
       end
       callback()
     end))
