@@ -203,6 +203,7 @@ lsp.CompletionItemKind = {
 }
 for _, k in ipairs(vim.tbl_keys(lsp.CompletionItemKind)) do
   local v = lsp.CompletionItemKind[k]
+  lsp.CompletionItemKind[v] = k
 end
 
 ---@class lsp.internal.CompletionItemDefaults
